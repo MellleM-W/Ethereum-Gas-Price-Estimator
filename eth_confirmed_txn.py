@@ -44,7 +44,7 @@ updateCol = [
 
 # while True:
 
-SQL_select = 'SELECT txnHash FROM eth_pending_txn WHERE success = false;'
+SQL_select = 'SELECT txnHash FROM eth_pending_txn WHERE success = 0;'
 cursor.execute(SQL_select)
 # print('selected')
 
@@ -64,8 +64,8 @@ for txnHash in txnHashList:
     print(progress)
     time.sleep(3)
     txnEthplorerurl = "https://api.ethplorer.io/getTxInfo/" + \
-        txnHash + "?apiKey=" + ethExplorerApiKey + '"'
-    # print(txnEthplorerurl)
+        txnHash + "?apiKey=" + ethExplorerApiKey
+    #print(txnEthplorerurl)
     txnEthplorerurlResponse = requests.get(txnEthplorerurl).json()
 
     if 'success' in txnEthplorerurlResponse and txnEthplorerurlResponse['success'] == True:
@@ -79,7 +79,7 @@ for txnHash in txnHashList:
         ]
 
         txnEthscanurl = "https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=" + \
-            txnHash + "&apikey=" + ethScanApiKey + '"'
+            txnHash + "&apikey=" + ethScanApiKey
         # print(txnEthscanurl)
         txnEthscanurlResponse = requests.get(txnEthscanurl).json()
         if txnEthscanurlResponse['result']['gasPrice'] is not None:
@@ -121,19 +121,20 @@ for txnHash in txnHashList:
                 print(error)
                 print(getVal)
 
-    '''elif txnEthplorerurlResponse['success'] == False:
-        SQL_deleteTxn = 'DELETE FROM eth_pending_txn WHERE txnHash = ' + "'" + txnHash + "'" + ';'
+    elif 'success' not in txnEthplorerurlResponse or txnEthplorerurlResponse['success'] == False:
+        SQL_markTxn = 'UPDATE eth_pending_txn SET success = 2 WHERE txnHash = ' + \
+            "'" + txnHash + "'" + ';'
         try:
-                cursor.execute(SQL_deleteTxn)
-                connection.commit()
-                print('failed txn deleted')
-                print()
+            cursor.execute(SQL_markTxn)
+            connection.commit()
+            print('failed txn marked')
+            print()
         except Exception as error:
-                print("Error occurs when DELETE")
-                print("Error name: ") 
-                print(error)
-                print()
+            print("Error occurs when UPDATE failed txn")
+            print("Error name: ")
+            print(error)
+            print()
     else:
-        1'''
+        1
 
     # time.sleep(3600)
